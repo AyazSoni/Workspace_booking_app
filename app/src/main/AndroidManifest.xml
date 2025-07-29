@@ -13,7 +13,7 @@
         android:theme="@style/Theme.WORKSPACE_BOOKING_APP"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".AdminActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
