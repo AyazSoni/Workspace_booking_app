@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import android.widget.ImageButton
 
 class AdminActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?){
@@ -15,6 +16,13 @@ class AdminActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        val settingButton = findViewById<ImageButton>(R.id.setting_btn)
+
+        settingButton.setOnClickListener{
+            val dialog = AddRoomDialogFragment()
+            dialog.show(supportFragmentManager, "AddRoomDialogFragment")
         }
     }
 }
