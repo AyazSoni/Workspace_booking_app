@@ -6,7 +6,9 @@
     android:id="@+id/main"
     android:layout_height="match_parent">
 
+    <!-- Workspace Banner Card -->
     <androidx.cardview.widget.CardView
+        android:id="@+id/workspace_banner_card"
         android:layout_width="350dp"
         android:layout_height="200dp"
         android:layout_marginTop="25dp"
@@ -17,47 +19,74 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-        <ImageView
-            android:id="@+id/imageViewBanner"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:src="@drawable/banner"
-            android:contentDescription="Banner Image" />
+            android:layout_height="match_parent">
+            
+            <ImageView
+                android:id="@+id/imageViewBanner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/banner"
+                android:contentDescription="Banner Image" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#73313137"
-            />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#73313137" />
 
-        <TextView
-            android:id="@+id/workspace_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="WorkSpace CO."
-            android:textSize="30dp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            />
+            <TextView
+                android:id="@+id/workspace_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="WorkSpace CO."
+                android:textSize="30dp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
 
-          <ImageButton
-              android:id="@+id/setting_btn"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:src="@drawable/setting"
-              android:background="@android:color/transparent"
-              android:layout_gravity="right|top"
-              android:layout_marginTop="15dp"
-              android:layout_marginRight="15dp"
-              />
+            <ImageButton
+                android:id="@+id/setting_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/setting"
+                android:background="@android:color/transparent"
+                android:layout_gravity="right|top"
+                android:layout_marginTop="15dp"
+                android:layout_marginRight="15dp" />
+
         </FrameLayout>
 
     </androidx.cardview.widget.CardView>
+
+    <!-- Rooms Title -->
+    <TextView
+        android:id="@+id/rooms_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rooms"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#000000"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="20dp"
+        app:layout_constraintTop_toBottomOf="@id/workspace_banner_card"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Rooms RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rooms_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp"
+        app:layout_constraintTop_toBottomOf="@id/rooms_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
