@@ -1,5 +1,6 @@
 package com.example.workspace_booking_app
 
+import DatabaseHelper
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -9,6 +10,7 @@ import com.example.workspace_booking_app.databinding.ActivityLoginBinding
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var dbHelper: DatabaseHelper
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -16,11 +18,13 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         enableEdgeToEdge()
         setContentView(binding.root)
+        dbHelper = DatabaseHelper(this)
+
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString()
             val password = binding.etPassword.text.toString()
             if (isLoginInputValid(email, password)) {
-                if (UserManager.isValidUser(email, password)) {
+                if (dbHelper.loginUser(email, password)) {
                     Toast.makeText(this, "Login Successfull", Toast.LENGTH_SHORT).show()
 
                     val intent = Intent(this, MainActivity::class.java)
@@ -45,4 +49,6 @@ class LoginActivity : AppCompatActivity() {
             return true
 
         }
+
+
 }

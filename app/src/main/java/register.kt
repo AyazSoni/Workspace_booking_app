@@ -1,5 +1,6 @@
 package com.example.workspace_booking_app
 
+import DatabaseHelper
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -10,11 +11,14 @@ class Register : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
 
+    private lateinit var dbHelper: DatabaseHelper
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        dbHelper = DatabaseHelper(this)
 
         binding.singup.setOnClickListener {
             val name = binding.etFullName.text.toString()
@@ -23,7 +27,7 @@ class Register : AppCompatActivity() {
             val confirmPassword = binding.etConfirmPassword.text.toString()
 
             if (isInputValid(name, email, password, confirmPassword)) {
-                val success = UserManager.registerUser(name, email, password)
+                val success = dbHelper.registerUser(name, email, password)
                 if (success) {
                     Toast.makeText(this, "Register Successfull", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, LoginActivity::class.java)
@@ -45,7 +49,7 @@ class Register : AppCompatActivity() {
 
             }
             if (!email.matches(emailPattern.toRegex())) {
-                Toast.makeText(this, "Invilid Email Format", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Invailid Email Format", Toast.LENGTH_SHORT).show()
                 return false
             }
             if (password != confirmPassword) {
