@@ -1,3 +1,4 @@
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
@@ -20,6 +21,7 @@ class DatabaseHelper (context: Context) :
 
         }
 
+    @SuppressLint("SuspiciousIndentation")
     override fun onCreate(db: SQLiteDatabase?){
         val createTable = """
          CREATE TABLE $TABLE_USERS (
