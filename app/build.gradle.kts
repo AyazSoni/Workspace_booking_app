@@ -3,9 +3,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
 }
 
+
+
+
 android {
     namespace = "com.example.workspace_booking_app"
     compileSdk = 35
+
+    buildFeatures {
+        viewBinding=true
+    }
 
     defaultConfig {
         applicationId = "com.example.workspace_booking_app"
