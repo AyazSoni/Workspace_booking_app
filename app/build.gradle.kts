@@ -4,8 +4,6 @@ plugins {
 }
 
 
-
-
 android {
     namespace = "com.example.workspace_booking_app"
     compileSdk = 35

@@ -55,10 +55,16 @@ class LoginActivity : AppCompatActivity() {
                 }
                 else {
                     Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-
-                    val intent = Intent(this, MainActivity::class.java)
-                    startActivity(intent)
-                    finish()
+                    if(user["role"] == "admin"){
+                        val intent = Intent(this, AdminActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
+                    else {
+                        val intent = Intent(this, MainActivity::class.java)
+                        startActivity(intent)
+                        finish()
+                    }
                 }
             } else {
                 Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show()

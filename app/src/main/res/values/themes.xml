@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.WORKSPACE_BOOKING_APP" parent="Base.Theme.WORKSPACE_BOOKING_APP" />
+    
+    <!-- Custom Black Button Style -->
+    <style name="CustomBlackButton" parent="Widget.Material3.Button">
+        <item name="android:background">@drawable/btn_blur_background</item>
+        <item name="backgroundTint">@null</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
 </resources>
