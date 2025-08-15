@@ -12,7 +12,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import com.example.workspace_booking_app.sharedstore.Workspace
+import com.example.workspace_booking_app.data.WorkspaceRepo
 import com.example.workspace_booking_app.utils.ImageUtils
 import com.google.android.material.button.MaterialButton
 import java.io.File
@@ -27,7 +27,7 @@ class AddRoomDialogFragment : DialogFragment() {
 
     private val pickMedia = registerForActivityResult(PickVisualMedia()) { uri ->
         if (uri != null) {
-            val path = ImageUtils.handleImageSelection(requireContext(), uri, "banner")
+            val path = ImageUtils.handleImageSelection(requireContext(), uri, "banners")
             Toast.makeText(requireContext(), "Image Saved", Toast.LENGTH_SHORT).show()
             val bannerImageView = view?.findViewById<ImageView>(R.id.imageViewBanner)
             ImageUtils.setImageFromPath(bannerImageView, path)
@@ -39,11 +39,16 @@ class AddRoomDialogFragment : DialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        val workspaceRepo = WorkspaceRepo(requireContext())
+        val workspace = workspaceRepo.getWorkspace()
+
         val view = inflater.inflate(R.layout.admin_setting_dialog, container, false)
+
         val nameTextView = view.findViewById<EditText>(R.id.workspace_name_input)
         val bannerImageView = view.findViewById<ImageView>(R.id.imageViewBanner)
-        val workspace_name = Workspace.getWorkspaceName()
-        val bannerPath = Workspace.getWorkspaceBannerPath()
+
+        val workspace_name = workspace?.get("name") ?: "harami Workspace"
+        val bannerPath = workspace?.get("banner_path")
         nameTextView.setText(workspace_name)
         bannerPath?.let {
             ImageUtils.setImageFromPath(bannerImageView, it)
@@ -73,8 +78,9 @@ class AddRoomDialogFragment : DialogFragment() {
         }
 
         view.findViewById<MaterialButton>(R.id.btnsave).setOnClickListener {
+            val workspaceRepo = WorkspaceRepo(requireContext())
             val workspaceName = view.findViewById<EditText>(R.id.workspace_name_input).text.toString()
-            Workspace.postWorkspaceData(workspaceName)
+            workspaceRepo.updateWorkspace(workspaceName)
             onDialogCloseListener?.onDialogClosed()
             dismiss()
         }

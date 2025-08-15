@@ -12,7 +12,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.workspace_booking_app.sharedstore.Workspace
+
+import com.example.workspace_booking_app.data.WorkspaceRepo
 import com.example.workspace_booking_app.utils.ImageUtils
 
 class AdminActivity : AppCompatActivity() {
@@ -20,13 +21,16 @@ class AdminActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Workspace.setupDefaultData(this)
         setContentView(R.layout.admin_page)
+
+        val workspaceRepo = WorkspaceRepo(this)
         
         // Setup workspace banner
         val workspace_name = findViewById<TextView>(R.id.workspace_name)
-        workspace_name.setText(Workspace.getWorkspaceName())
-        val bannerPath = Workspace.getWorkspaceBannerPath()
+        val workspace = workspaceRepo.getWorkspace()
+
+        workspace_name.setText(workspace?.get("name") ?: "Default Workspace" )
+        val bannerPath = workspace?.get("banner_path")
         val bannerImageView = findViewById<ImageView>(R.id.imageViewBanner)
         bannerPath?.let {
             ImageUtils.setImageFromPath(bannerImageView, it)
@@ -47,8 +51,9 @@ class AdminActivity : AppCompatActivity() {
             dialog.onDialogCloseListener = object : AddRoomDialogFragment.OnDialogCloseListener {
                 override fun onDialogClosed() {
                    val workspace_name = findViewById<TextView>(R.id.workspace_name)
-                    workspace_name.setText(Workspace.getWorkspaceName())
-                    val bannerPath = Workspace.getWorkspaceBannerPath()
+                    val workspace = workspaceRepo.getWorkspace()
+                    workspace_name.setText(workspace?.get("name") ?: "harami Workspace")
+                    val bannerPath = workspace?.get("banner_path")
                     val bannerImageView = findViewById<ImageView>(R.id.imageViewBanner)
                     bannerPath?.let {
                         ImageUtils.setImageFromPath(bannerImageView, it)
