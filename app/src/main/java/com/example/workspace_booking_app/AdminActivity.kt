@@ -1,6 +1,7 @@
 package com.example.workspace_booking_app
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -17,6 +18,8 @@ import com.example.workspace_booking_app.data.WorkspaceRepo
 import com.example.workspace_booking_app.utils.ImageUtils
 
 class AdminActivity : AppCompatActivity() {
+
+    private lateinit var imageUploadDialog: ImageUploadDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +41,9 @@ class AdminActivity : AppCompatActivity() {
 
         // Setup room list
         setupRoomList()
+
+        // Initialize ImageUploadDialog
+        imageUploadDialog = ImageUploadDialog(this)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -61,6 +67,12 @@ class AdminActivity : AppCompatActivity() {
                 }
             }
             dialog.show(supportFragmentManager, "AddRoomDialogFragment")
+        }
+
+        // Add Room Button Click Handler
+        val addRoomButton = findViewById<Button>(R.id.add_room_fab)
+        addRoomButton.setOnClickListener {
+            imageUploadDialog.show()
         }
     }
 

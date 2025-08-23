@@ -10,6 +10,7 @@ import android.os.Build
 import android.widget.ImageView
 import java.io.File
 import java.io.FileOutputStream
+import java.util.UUID
 
 object ImageUtils {
 
@@ -39,6 +40,29 @@ object ImageUtils {
         }
 
         return file.absolutePath
+    }
+
+    fun saveImageWithUniqueName(context: Context, bitmap: Bitmap, folder: String): String {
+        val dir = File(context.filesDir, folder)
+        if (!dir.exists()) dir.mkdirs()
+
+        val uniqueFileName = "product_${UUID.randomUUID()}.png"
+        val file = File(dir, uniqueFileName)
+
+        FileOutputStream(file).use {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+
+        return file.absolutePath
+    }
+
+    fun deleteImageFromStorage(imagePath: String): Boolean {
+        val file = File(imagePath)
+        return if (file.exists()) {
+            file.delete()
+        } else {
+            false
+        }
     }
 
     fun setImageFromPath(imageView: ImageView?, path: String) {

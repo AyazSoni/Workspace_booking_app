@@ -1,4 +1,4 @@
-package com.example.workspace_booking_app.com.example.workspace_booking_app
+package com.example.workspace_booking_app
 
 import android.content.Intent
 import android.os.Bundle
