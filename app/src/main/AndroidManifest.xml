@@ -23,6 +23,7 @@
         </activity>
 
         <activity android:name=".MainActivity" />
+        <activity android:name=".BookingDetailsActivity" />
         <activity android:name=".com.example.workspace_booking_app.Register" />
         <activity android:name=".AdminActivity" />
     </application>
