@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="80dp"
     android:layout_height="80dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="8dp">
 
     <ImageView
@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:background="@drawable/room_item_background"
+        android:background="@drawable/room1_p1"
         android:contentDescription="Image Preview" />
 
     <ImageButton
@@ -24,7 +24,7 @@
         android:background="#B71C1C"
         android:scaleType="fitCenter"
         android:contentDescription="Remove Image"
-        android:tint="@color/white"
+        app:tint="@color/white"
         />
 
 </FrameLayout>

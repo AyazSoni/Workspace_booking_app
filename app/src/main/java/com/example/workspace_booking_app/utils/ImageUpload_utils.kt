@@ -46,7 +46,7 @@ object ImageUtils {
         val dir = File(context.filesDir, folder)
         if (!dir.exists()) dir.mkdirs()
 
-        val uniqueFileName = "product_${UUID.randomUUID()}.png"
+        val uniqueFileName = "room_${UUID.randomUUID()}.png"
         val file = File(dir, uniqueFileName)
 
         FileOutputStream(file).use {
