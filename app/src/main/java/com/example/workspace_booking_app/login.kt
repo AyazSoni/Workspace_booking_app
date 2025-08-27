@@ -60,9 +60,9 @@ class LoginActivity : AppCompatActivity() {
                         finish()
                     }
                     else {
-                        val intent = Intent(this, MainActivity::class.java)
+                        val intent = Intent(this, BookingDetailsActivity::class.java)
                         startActivity(intent)
-                        finish()
+                       // finish()
                     }
                 }
             } else {
