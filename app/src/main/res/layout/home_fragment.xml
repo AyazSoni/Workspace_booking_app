@@ -80,7 +80,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@null"
-                android:hint="Search..."
+                android:hint="Search by name and location..."
                 android:imeOptions="actionSearch"
                 android:padding="0dp"
                 android:singleLine="true"

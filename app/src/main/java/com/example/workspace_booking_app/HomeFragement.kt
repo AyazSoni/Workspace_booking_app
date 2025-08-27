@@ -18,6 +18,11 @@ import com.example.workspace_booking_app.data.WorkspaceRepo
 import com.example.workspace_booking_app.Room
 import com.example.workspace_booking_app.utils.ImageUtils
 import android.util.Log
+import android.content.Intent
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.switchmaterial.SwitchMaterial
+import android.widget.AutoCompleteTextView
+import android.text.Editable
 
 class HomeFragment : Fragment() {
     
@@ -28,6 +33,7 @@ class HomeFragment : Fragment() {
     private var maxSize: Int = 0
     private var hasComputer: Boolean = false
     private var hasProjector: Boolean = false
+    private var searchQuery: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,8 +45,27 @@ class HomeFragment : Fragment() {
         // Set up filter button click listener
         val filterButton = view.findViewById<ImageButton>(R.id.filterButton)
         filterButton.setOnClickListener {
+            Log.d("HomeFragment", "Filter button clicked!")
+            Toast.makeText(requireContext(), "Filter button clicked!", Toast.LENGTH_SHORT).show()
             showFilterDialog()
         }
+        
+        // Set up search functionality
+        val searchEditText = view.findViewById<EditText>(R.id.searchEditText)
+        searchEditText.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            
+            override fun afterTextChanged(s: Editable?) {
+                searchQuery = s?.toString()?.trim() ?: ""
+                Log.d("HomeFragment", "Search query: '$searchQuery'")
+                
+                // Apply search filter immediately
+                val recyclerView = view.findViewById<RecyclerView>(R.id.roomsRecyclerView)
+                applySearchAndFilters(recyclerView)
+            }
+        })
         
         // Set up workspace header
         setupWorkspaceHeader(view)
@@ -56,7 +81,7 @@ class HomeFragment : Fragment() {
         // Refresh room list when fragment becomes visible
         val recyclerView = view?.findViewById<RecyclerView>(R.id.roomsRecyclerView)
         recyclerView?.let { rv ->
-            loadAndDisplayRooms(rv)
+            applySearchAndFilters(rv)
         }
         
         // Refresh workspace header when fragment becomes visible
@@ -113,7 +138,7 @@ class HomeFragment : Fragment() {
         try {
             // Get real data from database
             val roomRepo = RoomRepo(requireContext())
-            val roomsData = roomRepo.getAllRooms()
+            var roomsData = roomRepo.getAllRooms()
             
             Log.d("HomeFragment", "Loaded ${roomsData.size} rooms from database")
             
@@ -124,30 +149,9 @@ class HomeFragment : Fragment() {
                 return
             }
             
-            // Convert database data to Room objects
-            val realRooms = roomsData.map { roomMap ->
-                Room(
-                    id = roomMap["id"] ?: "",
-                    name = roomMap["name"] ?: "",
-                    location = roomMap["location"] ?: "",
-                    size = roomMap["size"]?.toIntOrNull() ?: 0,
-                    roomType = roomMap["room_type"] ?: "",
-                    hasComputer = roomMap["has_computer"] == "1",
-                    hasProjector = roomMap["has_projector"] == "1"
-                )
-            }
+            // Apply search and filters
+            applySearchAndFilters(recyclerView)
             
-            Log.d("HomeFragment", "Converted ${realRooms.size} rooms to Room objects")
-            
-            recyclerView.adapter = HomeRoomCardAdapter(
-                context = requireContext(),
-                rooms = realRooms,
-                onRoomCardClickListener = { room ->
-                    // Handle room card click - you can implement navigation or show details
-                    // For now, just show a toast
-                    Toast.makeText(requireContext(), "Clicked on ${room.name}", Toast.LENGTH_SHORT).show()
-                }
-            )
         } catch (e: Exception) {
             Log.e("HomeFragment", "Error loading rooms", e)
             // Handle any database errors
@@ -212,6 +216,28 @@ class HomeFragment : Fragment() {
         }
     }
     
+    private fun navigateToBookingDetails(room: Room) {
+        try {
+            val intent = Intent(requireContext(), BookingDetailsActivity::class.java).apply {
+                putExtra("room_id", room.id)
+                putExtra("room_name", room.name)
+                putExtra("room_type", room.roomType)
+                putExtra("room_size", room.size.toString())
+                putExtra("room_location", room.location)
+                putExtra("room_description", "") // We don't have description in our Room model yet
+                putExtra("has_computer", room.hasComputer)
+                putExtra("has_projector", room.hasProjector)
+            }
+            
+            Log.d("HomeFragment", "Navigating to BookingDetailsActivity with room: ${room.name}")
+            startActivity(intent)
+            
+        } catch (e: Exception) {
+            Log.e("HomeFragment", "Error navigating to booking details", e)
+            Toast.makeText(requireContext(), "Error opening room details", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
     private fun showFilterDialog() {
         val dialog = Dialog(requireContext())
         dialog.setContentView(R.layout.filter_dialog)
@@ -225,176 +251,46 @@ class HomeFragment : Fragment() {
         
         // Get dialog views
         val btnClose = dialog.findViewById<ImageButton>(R.id.btnClose)
-        val roomTypeSpinner = dialog.findViewById<Spinner>(R.id.roomTypeSpinner)
-        val locationSpinner = dialog.findViewById<Spinner>(R.id.locationSpinner)
-        val rangeSliderContainer = dialog.findViewById<FrameLayout>(R.id.rangeSliderContainer)
-        val minPoint = dialog.findViewById<View>(R.id.minPoint)
-        val maxPoint = dialog.findViewById<View>(R.id.maxPoint)
-        val activeRangeLine = dialog.findViewById<View>(R.id.activeRangeLine)
-        val minValueText = dialog.findViewById<TextView>(R.id.minValueText)
-        val maxValueText = dialog.findViewById<TextView>(R.id.maxValueText)
-        val computerToggle = dialog.findViewById<ToggleButton>(R.id.computerToggle)
-        val projectorToggle = dialog.findViewById<ToggleButton>(R.id.projectorToggle)
+        val roomTypeSpinner = dialog.findViewById<AutoCompleteTextView>(R.id.roomTypeSpinner)
+        val locationSpinner = dialog.findViewById<AutoCompleteTextView>(R.id.locationSpinner)
+        val minCapacityInput = dialog.findViewById<TextInputEditText>(R.id.minCapacityInput)
+        val maxCapacityInput = dialog.findViewById<TextInputEditText>(R.id.maxCapacityInput)
+        val computerToggle = dialog.findViewById<SwitchMaterial>(R.id.computerToggle)
+        val projectorToggle = dialog.findViewById<SwitchMaterial>(R.id.projectorToggle)
         val btnReset = dialog.findViewById<MaterialButton>(R.id.btnReset)
         val btnSave = dialog.findViewById<MaterialButton>(R.id.btnSave)
         
-        // Set up room type spinner
-        val roomTypes = arrayOf("All", "Meeting Room", "Conference Room", "Office", "Studio", "Classroom")
+        // Set up room type spinner with correct values from database
+        val roomTypes = arrayOf("All", "meeting", "normal", "chill")
         val roomTypeAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_item_room_type, roomTypes)
-        roomTypeSpinner.adapter = roomTypeAdapter
+        roomTypeSpinner.setAdapter(roomTypeAdapter)
         
-        // Set up location spinner
-        val locations = arrayOf("All", "Floor 1", "Floor 2", "Floor 3", "Building A", "Building B", "Building C")
+        // Set up location spinner with dynamic data from database
+        val roomRepo = RoomRepo(requireContext())
+        val uniqueLocations = roomRepo.getUniqueLocations()
+        val locations = mutableListOf("All")
+        locations.addAll(uniqueLocations)
         val locationAdapter = ArrayAdapter(requireContext(), R.layout.dropdown_item_room_type, locations)
-        locationSpinner.adapter = locationAdapter
-        
-        // Set up custom range slider
-        var isDraggingMin = false
-        var isDraggingMax = false
-        var lastTouchX = 0f
-        
-        // Initialize range values
-        var minValue = if (minSize > 0) minSize else 1
-        var maxValue = if (maxSize > 0) maxSize else 100
-        
-        fun updateRangeSlider() {
-            val containerWidth = rangeSliderContainer.width.toFloat()
-            if (containerWidth > 0) {
-                val minPosition = ((minValue - 1) / 99f) * (containerWidth - 16f)
-                val maxPosition = ((maxValue - 1) / 99f) * (containerWidth - 16f)
-                
-                minPoint.translationX = minPosition
-                maxPoint.translationX = maxPosition
-                
-                // Update active range line
-                val activeLineParams = activeRangeLine.layoutParams
-                activeLineParams.width = (maxPosition - minPosition).toInt()
-                activeRangeLine.layoutParams = activeLineParams
-                activeRangeLine.translationX = minPosition
-                
-                // Update text values (just numbers, no "people")
-                minValueText.text = minValue.toString()
-                maxValueText.text = maxValue.toString()
-            }
-        }
-        
-        // Touch listener for range slider
-        rangeSliderContainer.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    lastTouchX = event.x
-                    val minPointX = minPoint.x + minPoint.translationX + 8f // Center of min point
-                    val maxPointX = maxPoint.x + maxPoint.translationX + 8f // Center of max point
-                    
-                    // Increase touch area to 60dp for easier dragging
-                    if (Math.abs(event.x - minPointX) < 60) {
-                        isDraggingMin = true
-                        true
-                    } else if (Math.abs(event.x - maxPointX) < 60) {
-                        isDraggingMax = true
-                        true
-                    } else {
-                        false
-                    }
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (isDraggingMin || isDraggingMax) {
-                        val containerWidth = rangeSliderContainer.width.toFloat()
-                        val newPosition = event.x.coerceIn(0f, containerWidth - 16f)
-                        val newValue = ((newPosition / (containerWidth - 16f)) * 99f + 1f).toInt()
-                        
-                        if (isDraggingMin) {
-                            minValue = newValue.coerceAtMost(maxValue - 1).coerceAtLeast(1)
-                        } else if (isDraggingMax) {
-                            maxValue = newValue.coerceAtLeast(minValue + 1).coerceAtMost(100)
-                        }
-                        
-                        updateRangeSlider()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                MotionEvent.ACTION_UP -> {
-                    isDraggingMin = false
-                    isDraggingMax = false
-                    true
-                }
-                else -> false
-            }
-        }
-        
-        // Alternative: Add touch listeners directly to the points for better responsiveness
-        minPoint.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    isDraggingMin = true
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (isDraggingMin) {
-                        val containerWidth = rangeSliderContainer.width.toFloat()
-                        val newPosition = (event.rawX - rangeSliderContainer.x).coerceIn(0f, containerWidth - 16f)
-                        val newValue = ((newPosition / (containerWidth - 16f)) * 99f + 1f).toInt()
-                        minValue = newValue.coerceAtMost(maxValue - 1).coerceAtLeast(1)
-                        updateRangeSlider()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                MotionEvent.ACTION_UP -> {
-                    isDraggingMin = false
-                    true
-                }
-                else -> false
-            }
-        }
-        
-        maxPoint.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    isDraggingMax = true
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (isDraggingMax) {
-                        val containerWidth = rangeSliderContainer.width.toFloat()
-                        val newPosition = (event.rawX - rangeSliderContainer.x).coerceIn(0f, containerWidth - 16f)
-                        val newValue = ((newPosition / (containerWidth - 16f)) * 99f + 1f).toInt()
-                        maxValue = newValue.coerceAtLeast(minValue + 1).coerceAtMost(100)
-                        updateRangeSlider()
-                        true
-                    } else {
-                        false
-                    }
-                }
-                MotionEvent.ACTION_UP -> {
-                    isDraggingMax = false
-                    true
-                }
-                else -> false
-            }
-        }
+        locationSpinner.setAdapter(locationAdapter)
         
         // Set current values
         if (selectedRoomType.isNotEmpty()) {
             val roomTypeIndex = roomTypes.indexOf(selectedRoomType)
-            if (roomTypeIndex >= 0) roomTypeSpinner.setSelection(roomTypeIndex)
+            if (roomTypeIndex >= 0) roomTypeSpinner.setText(roomTypes[roomTypeIndex], false)
+        } else {
+            roomTypeSpinner.setText("All", false)
         }
         
         if (selectedLocation.isNotEmpty()) {
             val locationIndex = locations.indexOf(selectedLocation)
-            if (locationIndex >= 0) locationSpinner.setSelection(locationIndex)
+            if (locationIndex >= 0) locationSpinner.setText(locations[locationIndex], false)
+        } else {
+            locationSpinner.setText("All", false)
         }
         
-        // Initialize range slider after layout with proper initial positions
-        rangeSliderContainer.post {
-            // Set initial positions: min at start (1), max at end (100)
-            minValue = 1
-            maxValue = 100
-            updateRangeSlider()
-        }
+        // Set capacity values
+        minCapacityInput.setText(if (minSize > 0) minSize.toString() else "1")
+        maxCapacityInput.setText(if (maxSize > 0) maxSize.toString() else "100")
         
         computerToggle.isChecked = hasComputer
         projectorToggle.isChecked = hasProjector
@@ -406,11 +302,10 @@ class HomeFragment : Fragment() {
         
         btnReset.setOnClickListener {
             // Reset all values
-            roomTypeSpinner.setSelection(0)
-            locationSpinner.setSelection(0)
-            minValue = 1
-            maxValue = 100
-            updateRangeSlider()
+            roomTypeSpinner.setText("All", false)
+            locationSpinner.setText("All", false)
+            minCapacityInput.setText("1")
+            maxCapacityInput.setText("100")
             computerToggle.isChecked = false
             projectorToggle.isChecked = false
             
@@ -421,30 +316,54 @@ class HomeFragment : Fragment() {
             maxSize = 0
             hasComputer = false
             hasProjector = false
+            searchQuery = ""
+            
+            // Clear search text
+            val searchEditText = view?.findViewById<EditText>(R.id.searchEditText)
+            searchEditText?.setText("")
             
             // Refresh room list to show all rooms
             val recyclerView = view?.findViewById<RecyclerView>(R.id.roomsRecyclerView)
             recyclerView?.let { rv ->
-                loadAndDisplayRooms(rv)
+                applySearchAndFilters(rv)
             }
         }
         
         btnSave.setOnClickListener {
+            // Validate capacity inputs
+            val minCapacity = minCapacityInput.text.toString().toIntOrNull() ?: 1
+            val maxCapacity = maxCapacityInput.text.toString().toIntOrNull() ?: 100
+            
+            if (minCapacity < 1 || minCapacity > 100) {
+                Toast.makeText(requireContext(), "Min capacity must be between 1 and 100", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            if (maxCapacity < 1 || maxCapacity > 100) {
+                Toast.makeText(requireContext(), "Max capacity must be between 1 and 100", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            if (minCapacity > maxCapacity) {
+                Toast.makeText(requireContext(), "Min capacity cannot be greater than max capacity", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
             // Save filter values
-            selectedRoomType = if (roomTypeSpinner.selectedItemPosition > 0) {
-                roomTypeSpinner.selectedItem.toString()
+            selectedRoomType = if (roomTypeSpinner.text.toString() != "All") {
+                roomTypeSpinner.text.toString()
             } else ""
             
-            selectedLocation = if (locationSpinner.selectedItemPosition > 0) {
-                locationSpinner.selectedItem.toString()
+            selectedLocation = if (locationSpinner.text.toString() != "All") {
+                locationSpinner.text.toString()
             } else ""
             
-            minSize = minValue
-            maxSize = maxValue
+            minSize = minCapacity
+            maxSize = maxCapacity
             hasComputer = computerToggle.isChecked
             hasProjector = projectorToggle.isChecked
             
-            // Apply filters (for now just show a toast, later will implement actual filtering)
+            // Apply filters
             applyFilters()
             
             dialog.dismiss()
@@ -460,11 +379,11 @@ class HomeFragment : Fragment() {
             if (selectedRoomType.isNotEmpty()) append("Room Type: $selectedRoomType\n")
             if (selectedLocation.isNotEmpty()) append("Location: $selectedLocation\n")
             if (minSize > 0 || maxSize > 0) {
-                append("Size: ")
+                append("Capacity: ")
                 if (minSize > 0) append("$minSize")
                 append(" - ")
                 if (maxSize > 0) append("$maxSize")
-                append("\n")
+                append(" people\n")
             }
             if (hasComputer) append("Computer: Yes\n")
             if (hasProjector) append("Projector: Yes\n")
@@ -480,28 +399,49 @@ class HomeFragment : Fragment() {
     private fun applyFiltersToRoomList() {
         val recyclerView = view?.findViewById<RecyclerView>(R.id.roomsRecyclerView)
         recyclerView?.let { rv ->
+            applySearchAndFilters(rv)
+        }
+    }
+
+    private fun applySearchAndFilters(recyclerView: RecyclerView) {
+        try {
             val roomRepo = RoomRepo(requireContext())
             var roomsData = roomRepo.getAllRooms()
             
-            Log.d("HomeFragment", "Applying filters to ${roomsData.size} rooms")
+            Log.d("HomeFragment", "Applying search and filters to ${roomsData.size} rooms")
+            Log.d("HomeFragment", "Search query: '$searchQuery'")
             
-            // Apply filters
+            // Apply search filter first
+            if (searchQuery.isNotEmpty()) {
+                roomsData = roomsData.filter { room ->
+                    val name = room["name"]?.lowercase() ?: ""
+                    val location = room["location"]?.lowercase() ?: ""
+                    val query = searchQuery.lowercase()
+                    
+                    name.contains(query) || location.contains(query)
+                }
+                Log.d("HomeFragment", "After search filter: ${roomsData.size} rooms")
+            }
+            
+            // Apply other filters
             if (selectedRoomType.isNotEmpty()) {
                 roomsData = roomsData.filter { it["room_type"] == selectedRoomType }
-                Log.d("HomeFragment", "After room type filter: ${roomsData.size} rooms")
+                Log.d("HomeFragment", "After room type filter ($selectedRoomType): ${roomsData.size} rooms")
             }
             
             if (selectedLocation.isNotEmpty()) {
                 roomsData = roomsData.filter { it["location"] == selectedLocation }
-                Log.d("HomeFragment", "After location filter: ${roomsData.size} rooms")
+                Log.d("HomeFragment", "After location filter ($selectedLocation): ${roomsData.size} rooms")
             }
             
             if (minSize > 0 || maxSize > 0) {
                 roomsData = roomsData.filter { room ->
                     val size = room["size"]?.toIntOrNull() ?: 0
-                    (minSize <= 0 || size >= minSize) && (maxSize <= 0 || size <= maxSize)
+                    val minCheck = minSize <= 0 || size >= minSize
+                    val maxCheck = maxSize <= 0 || size <= maxSize
+                    minCheck && maxCheck
                 }
-                Log.d("HomeFragment", "After size filter: ${roomsData.size} rooms")
+                Log.d("HomeFragment", "After capacity filter ($minSize-$maxSize): ${roomsData.size} rooms")
             }
             
             if (hasComputer) {
@@ -530,13 +470,22 @@ class HomeFragment : Fragment() {
             Log.d("HomeFragment", "Final filtered rooms: ${filteredRooms.size}")
             
             // Update adapter with filtered data
-            rv.adapter = HomeRoomCardAdapter(
+            recyclerView.adapter = HomeRoomCardAdapter(
                 context = requireContext(),
                 rooms = filteredRooms,
                 onRoomCardClickListener = { room ->
-                    Toast.makeText(requireContext(), "Clicked on ${room.name}", Toast.LENGTH_SHORT).show()
+                    navigateToBookingDetails(room)
                 }
             )
+            
+            // Show message if no rooms match filters
+            if (filteredRooms.isEmpty()) {
+                showNoRoomsMessage(recyclerView)
+            }
+            
+        } catch (e: Exception) {
+            Log.e("HomeFragment", "Error applying search and filters", e)
+            showErrorMessage(recyclerView, "Error applying filters: ${e.message}")
         }
     }
 }

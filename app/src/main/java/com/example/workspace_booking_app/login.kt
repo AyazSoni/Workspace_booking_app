@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityLoginBinding
 import com.example.workspace_booking_app.data.UserRepo
 import com.example.workspace_booking_app.utils.DialogUtils
+import com.example.workspace_booking_app.utils.SessionManager
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -53,6 +54,15 @@ class LoginActivity : AppCompatActivity() {
 
                 }
                 else {
+                    // Create user session
+                    val sessionManager = SessionManager(this)
+                    sessionManager.createLoginSession(
+                        userId = user["id"] ?: "",
+                        email = user["email"] ?: "",
+                        name = user["name"] ?: "",
+                        role = user["role"] ?: ""
+                    )
+                    
                     Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
                     if(user["role"] == "admin"){
                         val intent = Intent(this, AdminActivity::class.java)
@@ -60,9 +70,9 @@ class LoginActivity : AppCompatActivity() {
                         finish()
                     }
                     else {
-                        val intent = Intent(this, BookingDetailsActivity::class.java)
+                        val intent = Intent(this, MainActivity::class.java)
                         startActivity(intent)
-                       // finish()
+                        finish()
                     }
                 }
             } else {

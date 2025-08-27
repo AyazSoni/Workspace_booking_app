@@ -84,4 +84,20 @@ class RoomCRUD(private val dbHelper: MyDatabaseHelper) {
         val db = dbHelper.writableDatabase
         return db.delete("rooms", "id = ?", arrayOf(roomId.toString()))
     }
+
+    fun getUniqueLocations(): List<String> {
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery("SELECT DISTINCT location FROM rooms WHERE location IS NOT NULL AND location != '' ORDER BY location", null)
+        val locations = mutableListOf<String>()
+
+        while (cursor.moveToNext()) {
+            val location = cursor.getString(0)
+            if (location != null && location.isNotEmpty()) {
+                locations.add(location)
+            }
+        }
+
+        cursor.close()
+        return locations
+    }
 }

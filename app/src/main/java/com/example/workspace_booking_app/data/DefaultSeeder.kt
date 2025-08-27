@@ -38,7 +38,7 @@ object DatabaseSeeder {
         // Insert Room 1: Executive Meeting Room
         db.execSQL("""
             INSERT OR IGNORE INTO rooms (id, name, room_type, location, size, has_computer, has_projector, description)
-            VALUES (1, 'Executive Meeting Room', 'meeting', 'Floor 2, East Wing', 120, 1, 1, 'Premium meeting room with modern amenities, perfect for executive meetings and client presentations. Features ergonomic seating and advanced presentation equipment.')
+            VALUES (1, 'Executive Meeting Room', 'meeting', 'Floor 2, East Wing', 20, 1, 1, 'Premium meeting room with modern amenities, perfect for executive meetings and client presentations. Features ergonomic seating and advanced presentation equipment.')
         """.trimIndent())
 
         // Insert Room 2: Creative Studio

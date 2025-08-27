@@ -11,6 +11,7 @@ import com.example.workspace_booking_app.data.RoomPhotosRepo
 import com.example.workspace_booking_app.data.RoomRepo
 import com.example.workspace_booking_app.utils.ImageUtils
 import android.util.Log
+import com.example.workspace_booking_app.Room
 
 class HomeRoomCardAdapter(
     private val context: Context,
@@ -51,8 +52,13 @@ class HomeRoomCardAdapter(
         // Load room photo (first photo)
         loadRoomPhoto(holder.cardImage, room.id.toInt())
         
-        // Set click listener for the card
+        // Set click listener for the button
         holder.btnSeeDetails.setOnClickListener {
+            onRoomCardClickListener?.invoke(room)
+        }
+        
+        // Set click listener for the entire card
+        holder.itemView.setOnClickListener {
             onRoomCardClickListener?.invoke(room)
         }
     }

@@ -1,4 +1,5 @@
-package com.example.workspace_booking_app;
+package com.example.workspace_booking_app
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -7,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.workspace_booking_app.utils.SessionManager
 
 
 class MainActivity : AppCompatActivity() {
@@ -19,6 +21,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        
+        // Check if user is logged in
+        val sessionManager = SessionManager(this)
+        if (!sessionManager.isLoggedIn()) {
+            // Redirect to login if not logged in
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -34,13 +46,24 @@ class MainActivity : AppCompatActivity() {
         txtHome = findViewById(R.id.txtHome)
         txtProfile = findViewById(R.id.txtProfile)
 
-        // load Home by default
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.container, HomeFragment())
-            .commit()
-
-        // Set initial state - Home selected
-        updateNavigationState(true)
+        // Check if we should show profile page (after booking completion)
+        val showProfile = intent.getBooleanExtra("show_profile", false)
+        
+        if (showProfile) {
+            // Load Profile fragment
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, ProfileFragment())
+                .commit()
+            // Set initial state - Profile selected
+            updateNavigationState(false)
+        } else {
+            // load Home by default
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.container, HomeFragment())
+                .commit()
+            // Set initial state - Home selected
+            updateNavigationState(true)
+        }
 
         btnHome.setOnClickListener {
             supportFragmentManager.beginTransaction()

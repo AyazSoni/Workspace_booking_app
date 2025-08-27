@@ -38,4 +38,8 @@ class RoomRepo(context: Context) {
     fun deleteRoom(roomId: Int): Int {
         return crud.deleteRoom(roomId)
     }
+
+    fun getUniqueLocations(): List<String> {
+        return crud.getUniqueLocations()
+    }
 }

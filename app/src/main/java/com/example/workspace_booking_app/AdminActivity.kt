@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.workspace_booking_app.data.WorkspaceRepo
 import com.example.workspace_booking_app.data.RoomRepo
 import com.example.workspace_booking_app.utils.ImageUtils
+import com.example.workspace_booking_app.Room
 
 class AdminActivity : AppCompatActivity() {
 

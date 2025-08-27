@@ -55,12 +55,27 @@ class MyDatabaseHelper(private val context: Context) :
         )
         """.trimIndent()
 
-
+        val createBookings = """
+            CREATE TABLE bookings(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                room_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                start_time TEXT NOT NULL,
+                end_time TEXT NOT NULL,
+                purpose TEXT,
+                status TEXT DEFAULT 'upcoming' CHECK(status IN ('upcoming', 'completed', 'cancelled')),
+                created_at DATETIME DEFAULT current_timestamp,
+                FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE CASCADE
+            )
+        """.trimIndent()
 
         db.execSQL(createUser)
         db.execSQL(createWorkspace)
         db.execSQL(createRooms)
         db.execSQL(roomPhotos)
+        db.execSQL(createBookings)
 
 
 

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.workspace_booking_app.data.RoomPhotosRepo
 import com.example.workspace_booking_app.data.RoomRepo
 import java.io.File
+import com.example.workspace_booking_app.Room
 
 class RoomAdapter(
     private val rooms: List<Room>,
@@ -122,15 +123,4 @@ class RoomAdapter(
             Toast.makeText(activity, "Error deleting room: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
-}
-
-// Data class for Room
-data class Room(
-    val id: String,
-    val name: String,
-    val location: String,
-    val size: Int,
-    val roomType: String,
-    val hasComputer: Boolean,
-    val hasProjector: Boolean
-) 
+} 
