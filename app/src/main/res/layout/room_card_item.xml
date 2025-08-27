@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardView"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="8dp"
+        android:backgroundTint="@android:color/white"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="8dp"
+        app:cardUseCompatPadding="true"
+        app:cardPreventCornerOverlap="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Top Image -->
+        <ImageView
+            android:id="@+id/cardImage"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/room1_p2"
+            android:adjustViewBounds="true" />
+
+        <!-- Content -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="4dp">
+
+                <!-- Title (takes max space) -->
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Conference Room"
+                    android:gravity="start"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black" />
+
+                <!-- Badge (always right-aligned) -->
+                <TextView
+                    android:id="@+id/roomTypeBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="4dp"
+                    android:text="Meeting Room"
+                    android:textSize="10sp"
+                    android:textColor="#333333"
+                    android:background="@drawable/badge_background" />
+
+            </LinearLayout>
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/pinmap"
+                    android:tint="#777" />
+
+                <TextView
+                    android:id="@+id/location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="2nd Floor, Building A"
+                    android:textSize="14sp"
+                    android:textColor="#777" />
+            </LinearLayout>
+
+            <!-- Capacity -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:layout_marginStart="2dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/group"
+                    android:tint="#777" />
+
+                <TextView
+                    android:id="@+id/capacity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="12 people"
+                    android:textSize="14sp"
+                    android:textColor="#777" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:layout_marginRight="8dp">
+
+                    <!-- Computer Badge -->
+                    <ImageView
+                        android:id="@+id/computerBadge"
+                        android:background="@drawable/badge_background_computer"
+                        android:src="@drawable/monitor"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:tint="#43A047"
+                        android:padding="5dp" />
+
+                    <!-- Projector Badge -->
+                    <ImageView
+                        android:id="@+id/ProjectorBadge"
+                        android:background="@drawable/badge_background_projector"
+                        android:src="@drawable/projector"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="8dp"
+                        android:tint="#8E24AA"
+                        android:padding="5dp" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChangeBanner"
+                android:layout_width="250dp"
+                android:layout_height="43dp"
+                android:layout_marginTop="16dp"
+                android:text="See Full Details"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_gravity="center"
+                app:backgroundTint="#000000"
+                app:cornerRadius="16dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
+
+</LinearLayout>
+

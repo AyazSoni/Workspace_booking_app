@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F6F4F4"
+    >
+
+    <!-- Header with Image + Overlay + Text -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:clipToOutline="true"
+        android:background="@drawable/header_background">
+
+        <!-- The main image -->
+        <ImageView
+            android:id="@+id/headerImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:src="@drawable/room1_p1" />
+
+        <!-- Black transparent overlay -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#80000000" /> <!-- 50% black -->
+
+        <!-- Center text -->
+        <TextView
+            android:id="@+id/headerText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Default workspace"
+            android:textSize="28sp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:layout_gravity="center" />
+
+    </FrameLayout>
+
+    <!-- Filter Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="80sp"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:layout_marginVertical="0dp"
+        android:gravity="center"
+        >
+
+        <!-- Filter button on left -->
+
+        <!-- Search bar on right -->
+        <LinearLayout
+            android:layout_width="310dp"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:background="@drawable/search_box_background"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:elevation="4dp"
+            android:translationY="4dp"
+            android:clipToOutline="true"
+            >
+
+            <ImageView
+                android:id="@+id/searchIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/magnifier"
+                />
+
+            <EditText
+                android:id="@+id/searchEditText"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@null"
+                android:hint="Search..."
+                android:imeOptions="actionSearch"
+                android:padding="0dp"
+                android:singleLine="true"
+                android:textSize="14sp"
+                android:layout_marginLeft="10dp"
+                />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/circle_bg"
+            android:layout_marginStart="8dp"
+            android:elevation="4dp"
+            android:translationY="4dp"
+            android:clipToOutline="true"
+            >
+
+
+
+            <ImageButton
+                android:id="@+id/filterButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:src="@drawable/sort"
+                android:scaleType="centerInside"
+                android:padding="10dp"
+                app:tint="@android:color/black"
+                android:contentDescription="Filter"
+
+
+                />
+        </FrameLayout>
+
+
+
+
+    </LinearLayout>
+
+
+    <!-- Scrollable Content -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/roomsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:clipToPadding="false"
+
+        />
+
+</LinearLayout>
