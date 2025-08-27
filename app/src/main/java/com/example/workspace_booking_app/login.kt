@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import com.example.workspace_booking_app.com.example.workspace_booking_app.Register
 import com.example.workspace_booking_app.databinding.ActivityLoginBinding
 import com.example.workspace_booking_app.data.UserRepo
 import com.example.workspace_booking_app.utils.DialogUtils

@@ -1,11 +1,11 @@
 package com.example.workspace_booking_app
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.EditText
+import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -14,9 +14,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
 import com.example.workspace_booking_app.data.WorkspaceRepo
+import com.example.workspace_booking_app.data.RoomRepo
 import com.example.workspace_booking_app.utils.ImageUtils
 
 class AdminActivity : AppCompatActivity() {
+
+    private lateinit var addRoomDialog: Add_room
+    private var currentEditDialog: EditRoomDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +42,12 @@ class AdminActivity : AppCompatActivity() {
 
         // Setup room list
         setupRoomList()
+
+        // Initialize Add Room Dialog (registerForActivityResult must be called before RESUMED)
+        addRoomDialog = Add_room(this)
+        addRoomDialog.setOnRoomAddedListener {
+            setupRoomList() // Refresh the room list
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -62,21 +72,51 @@ class AdminActivity : AppCompatActivity() {
             }
             dialog.show(supportFragmentManager, "AddRoomDialogFragment")
         }
+
+        // Add Room Button Click Handler
+        val addRoomButton = findViewById<Button>(R.id.add_room_fab)
+        addRoomButton.setOnClickListener {
+            addRoomDialog.show()
+        }
     }
 
     private fun setupRoomList() {
         val recyclerView = findViewById<RecyclerView>(R.id.rooms_recycler_view)
         recyclerView.layoutManager = LinearLayoutManager(this)
         
-        // Dummy data
-        val dummyRooms = listOf(
-            Room("1", "Conference Room A", "Surat, Gujarat", 8, "meeting", true, true),
-            Room("2", "Break Room B", "Surat, Gujarat", 4, "chill", true, false),
-            Room("3", "Office 1", "Surat, Gujarat", 2, "normal", true, false),
-            Room("4", "Meeting Hall", "Surat, Gujarat", 12, "meeting", false, true),
-            Room("5", "Lounge Area", "Surat, Gujarat", 6, "chill", false, false)
-        )
+        // Get real data from database
+        val roomRepo = RoomRepo(this)
+        val roomsData = roomRepo.getAllRooms()
         
-        recyclerView.adapter = RoomAdapter(dummyRooms)
+        // Convert database data to Room objects
+        val realRooms = roomsData.map { roomMap ->
+            Room(
+                id = roomMap["id"] ?: "",
+                name = roomMap["name"] ?: "",
+                location = roomMap["location"] ?: "",
+                size = roomMap["size"]?.toIntOrNull() ?: 0,
+                roomType = roomMap["room_type"] ?: "",
+                hasComputer = roomMap["has_computer"] == "1",
+                hasProjector = roomMap["has_projector"] == "1"
+            )
+        }
+        
+        recyclerView.adapter = RoomAdapter(
+            rooms = realRooms,
+            activity = this,
+            onRoomUpdatedListener = {
+                setupRoomList() // Refresh the room list when a room is updated
+            },
+            onEditDialogCreated = { editDialog ->
+                currentEditDialog = editDialog
+            }
+        )
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        currentEditDialog?.handleActivityResult(requestCode, resultCode, data)
     }
 }
+
+
