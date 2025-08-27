@@ -13,7 +13,7 @@
         android:theme="@style/Theme.WORKSPACE_BOOKING_APP"
         tools:targetApi="31">
         <activity
-            android:name=".LoginActivity"
+            android:name="MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,9 +22,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity" />
-        <activity android:name=".com.example.workspace_booking_app.Register" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".Register" />
         <activity android:name=".AdminActivity" />
+
+
     </application>
 
 </manifest>
