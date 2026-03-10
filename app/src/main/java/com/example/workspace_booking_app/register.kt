@@ -6,12 +6,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityRegisterBinding
 import com.example.workspace_booking_app.utils.DialogUtils
-import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class Register : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
-    private lateinit var auth: FirebaseAuth
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,16 +19,13 @@ class Register : AppCompatActivity() {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize Firebase Auth
-        auth = FirebaseAuth.getInstance()
-
-        // Go to Login Screen
+        // Go to Login screen
         binding.btnLogin.setOnClickListener {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
         }
 
-        // Register Button
+        // Register button
         binding.signup.setOnClickListener {
 
             val name = binding.etFullName.text.toString().trim()
@@ -38,31 +35,23 @@ class Register : AppCompatActivity() {
 
             if (isInputValid(name, email, password, confirmPassword)) {
 
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
+                val user = hashMapOf(
+                    "name" to name,
+                    "email" to email,
+                    "password" to password,
+                    "role" to "user"
+                )
 
-                        if (task.isSuccessful) {
+                db.collection("users")
+                    .add(user)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show()
 
-                            Toast.makeText(
-                                this,
-                                "Registration Successful",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                            // Go to Login Screen
-                            val intent = Intent(this, LoginActivity::class.java)
-                            startActivity(intent)
-                            finish()
-
-                        } else {
-
-                            DialogUtils.showMessage(
-                                context = this,
-                                title = "Registration Failed",
-                                message = task.exception?.message
-                                    ?: "Something went wrong"
-                            )
-                        }
+                        startActivity(Intent(this, LoginActivity::class.java))
+                        finish()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, "Error: ${it.message}", Toast.LENGTH_SHORT).show()
                     }
             }
         }

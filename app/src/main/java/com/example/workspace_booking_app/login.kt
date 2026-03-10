@@ -21,8 +21,14 @@ class LoginActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
-        // Initialize Firebase Auth
+        // Initialize Firebase Authentication
         auth = FirebaseAuth.getInstance()
+
+        // If user already logged in → skip login
+        if (auth.currentUser != null) {
+            startActivity(Intent(this, BookingDetailsActivity::class.java))
+            finish()
+        }
 
         // Go to Register Screen
         binding.btnSignup.setOnClickListener {
@@ -49,10 +55,6 @@ class LoginActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
 
-                            val user = auth.currentUser
-
-                            // You can later store roles in Firestore
-                            // For now redirect normally
                             val intent = Intent(this, BookingDetailsActivity::class.java)
                             startActivity(intent)
                             finish()
@@ -62,12 +64,10 @@ class LoginActivity : AppCompatActivity() {
                             DialogUtils.showMessage(
                                 context = this@LoginActivity,
                                 title = "Login Failed",
-                                message = task.exception?.message
-                                    ?: "Authentication failed"
+                                message = task.exception?.message ?: "Authentication failed"
                             )
                         }
                     }
-
             } else {
                 Toast.makeText(this, "Please fix the errors", Toast.LENGTH_SHORT).show()
             }
