@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870987985517",
+    "project_id": "workspacebooking12",
+    "storage_bucket": "workspacebooking12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870987985517:android:a068b9d7025ff4af8d0564",
+        "android_client_info": {
+          "package_name": "com.example.workspace_booking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxr_B7M8pEnrCe9NMv1XJ_Yk5QMKlTYS4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

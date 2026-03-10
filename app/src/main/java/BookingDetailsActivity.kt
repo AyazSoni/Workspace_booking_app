@@ -14,18 +14,18 @@ class BookingDetailsActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var currentPage = 0
 
+    // Auto scroll runnable
     private val autoScrollRunnable = object : Runnable {
         override fun run() {
-            if (::adapter.isInitialized) {
-                currentPage++
-                binding.imageSlider.setCurrentItem(currentPage, true) // always smooth
-                handler.postDelayed(this, 3000) // every 3s
-            }
+            currentPage++
+            binding.imageSlider.setCurrentItem(currentPage, true)
+            handler.postDelayed(this, 3000) // change image every 3 seconds
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = BookingDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -38,7 +38,7 @@ class BookingDetailsActivity : AppCompatActivity() {
         adapter = ImageSliderAdapter(images)
         binding.imageSlider.adapter = adapter
 
-        // Start from middle to allow scrolling both ways
+        // Start from middle for infinite scrolling effect
         currentPage = Int.MAX_VALUE / 2
         binding.imageSlider.setCurrentItem(currentPage, false)
 
@@ -48,6 +48,16 @@ class BookingDetailsActivity : AppCompatActivity() {
         binding.bookNowBtn.setOnClickListener {
             Toast.makeText(this, "Booking Confirmed!", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(autoScrollRunnable)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        handler.postDelayed(autoScrollRunnable, 3000)
     }
 
     override fun onDestroy() {

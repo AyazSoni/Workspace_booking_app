@@ -6,72 +6,76 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityLoginBinding
-import com.example.workspace_booking_app.data.UserRepo
 import com.example.workspace_booking_app.utils.DialogUtils
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityLoginBinding.inflate(layoutInflater)
         enableEdgeToEdge()
         setContentView(binding.root)
-        val userRepo = UserRepo(this)
 
-        val btnSignup = binding.btnSignup
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
 
-        btnSignup.setOnClickListener {
+        // Go to Register Screen
+        binding.btnSignup.setOnClickListener {
             val intent = Intent(this, Register::class.java)
             startActivity(intent)
         }
 
+        // Login Button
         binding.btnLogin.setOnClickListener {
-            val email = binding.etEmail.text.toString()
-            val password = binding.etPassword.text.toString()
+
+            val email = binding.etEmail.text.toString().trim()
+            val password = binding.etPassword.text.toString().trim()
 
             if (isLoginInputValid(email, password)) {
-                val user = userRepo.getValueByFilter("email" , email)
-                if (user == null) {
-                    DialogUtils.showMessage(
-                        context = this@LoginActivity, // Ensures activity context
-                        title = "Account Not Found",
-                        message = "No account found with that email. Please sign up to continue.",
-                        positiveText = "Sign Up",
-                        positiveAction = {
-                            startActivity(Intent(this@LoginActivity, Register::class.java))
-                        },
-                        negativeText = "Cancel"
-                    )
-                }
-                else if (user["password"] != password) {
-                    DialogUtils.showMessage(
-                        context = this@LoginActivity,
-                        title = "Wrong Password",
-                        message = "The password you entered is incorrect."
-                    )
 
-                }
-                else {
-                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                    if(user["role"] == "admin"){
-                        val intent = Intent(this, AdminActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+
+                        if (task.isSuccessful) {
+
+                            Toast.makeText(
+                                this,
+                                "Login Successful",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            val user = auth.currentUser
+
+                            // You can later store roles in Firestore
+                            // For now redirect normally
+                            val intent = Intent(this, BookingDetailsActivity::class.java)
+                            startActivity(intent)
+                            finish()
+
+                        } else {
+
+                            DialogUtils.showMessage(
+                                context = this@LoginActivity,
+                                title = "Login Failed",
+                                message = task.exception?.message
+                                    ?: "Authentication failed"
+                            )
+                        }
                     }
-                    else {
-                        val intent = Intent(this, BookingDetailsActivity::class.java)
-                        startActivity(intent)
-                       // finish()
-                    }
-                }
+
             } else {
-                Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please fix the errors", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun isLoginInputValid(email: String, password: String): Boolean {
+
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
 
         if (email.isEmpty() || password.isEmpty()) {
