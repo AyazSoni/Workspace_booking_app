@@ -5,13 +5,14 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityRegisterBinding
-import com.example.workspace_booking_app.utils.DialogUtils
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class Register : AppCompatActivity() {
 
     private lateinit var binding: ActivityRegisterBinding
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,16 +20,13 @@ class Register : AppCompatActivity() {
         binding = ActivityRegisterBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize Firebase Auth
         auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
 
-        // Go to Login Screen
         binding.btnLogin.setOnClickListener {
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, LoginActivity::class.java))
         }
 
-        // Register Button
         binding.signup.setOnClickListener {
 
             val name = binding.etFullName.text.toString().trim()
@@ -36,39 +34,65 @@ class Register : AppCompatActivity() {
             val password = binding.etPassword.text.toString().trim()
             val confirmPassword = binding.etConfirmPassword.text.toString().trim()
 
-            if (isInputValid(name, email, password, confirmPassword)) {
+            if (!validateInput(name, email, password, confirmPassword)) return@setOnClickListener
 
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
+            // 🔥 Create user in Firebase Auth
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
 
-                        if (task.isSuccessful) {
+                    if (task.isSuccessful) {
 
-                            Toast.makeText(
-                                this,
-                                "Registration Successful",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        val user = auth.currentUser
+                        val uid = user?.uid
 
-                            // Go to Login Screen
-                            val intent = Intent(this, LoginActivity::class.java)
-                            startActivity(intent)
-                            finish()
+                        // 🔥 Save user in Firestore
+                        val userMap = hashMapOf(
+                            "name" to name,
+                            "email" to email,
+                            "role" to "user"
+                        )
 
-                        } else {
+                        if (uid != null) {
+                            db.collection("users")
+                                .document(uid)
+                                .set(userMap)
+                                .addOnSuccessListener {
 
-                            DialogUtils.showMessage(
-                                context = this,
-                                title = "Registration Failed",
-                                message = task.exception?.message
-                                    ?: "Something went wrong"
-                            )
+                                    Toast.makeText(
+                                        this,
+                                        "Registration Successful",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                                    startActivity(
+                                        Intent(this, LoginActivity::class.java)
+                                    )
+
+                                    finish()
+                                }
+                                .addOnFailureListener {
+
+                                    Toast.makeText(
+                                        this,
+                                        "Error saving user",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                         }
+
+                    } else {
+
+                        Toast.makeText(
+                            this,
+                            task.exception?.message,
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
-            }
+                }
         }
     }
 
-    private fun isInputValid(
+    private fun validateInput(
         name: String,
         email: String,
         password: String,
@@ -78,38 +102,22 @@ class Register : AppCompatActivity() {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
 
         if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            DialogUtils.showMessage(
-                context = this,
-                title = "Missing Information",
-                message = "Please fill in all the fields."
-            )
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
             return false
         }
 
         if (!email.matches(emailPattern.toRegex())) {
-            DialogUtils.showMessage(
-                context = this,
-                title = "Invalid Email",
-                message = "Please enter a valid email address."
-            )
-            return false
-        }
-
-        if (password != confirmPassword) {
-            DialogUtils.showMessage(
-                context = this,
-                title = "Password Mismatch",
-                message = "The passwords you entered do not match."
-            )
+            Toast.makeText(this, "Invalid Email", Toast.LENGTH_SHORT).show()
             return false
         }
 
         if (password.length < 6) {
-            DialogUtils.showMessage(
-                context = this,
-                title = "Weak Password",
-                message = "Password must be at least 6 characters long."
-            )
+            Toast.makeText(this, "Password must be 6+ characters", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
             return false
         }
 

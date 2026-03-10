@@ -9,9 +9,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.example.workspace_booking_app.data.RoomPhotosRepo
-import com.example.workspace_booking_app.data.RoomRepo
-import java.io.File
+import com.google.firebase.firestore.FirebaseFirestore
 
 class RoomAdapter(
     private val rooms: List<Room>,
@@ -19,6 +17,8 @@ class RoomAdapter(
     private val onRoomUpdatedListener: (() -> Unit)? = null,
     private val onEditDialogCreated: ((EditRoomDialog) -> Unit)? = null
 ) : RecyclerView.Adapter<RoomAdapter.RoomViewHolder>() {
+
+    private val db = FirebaseFirestore.getInstance()
 
     class RoomViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val roomName: TextView = itemView.findViewById(R.id.room_name)
@@ -31,50 +31,72 @@ class RoomAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RoomViewHolder {
+
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.room_list_item, parent, false)
+
         return RoomViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: RoomViewHolder, position: Int) {
+
         val room = rooms[position]
+
         holder.roomName.text = room.name
         holder.roomLocation.text = room.location
         holder.roomCapacity.text = "${room.size} people"
-        holder.roomType.text = "${room.roomType.capitalize()} Room"
-        
-        // Set visibility for features
-        val computerContainer = holder.itemView.findViewById<View>(R.id.computer_indicator).parent as View
-        val projectorContainer = holder.itemView.findViewById<View>(R.id.projector_indicator).parent as View
-        
-        computerContainer.visibility = if (room.hasComputer) View.VISIBLE else View.GONE
-        projectorContainer.visibility = if (room.hasProjector) View.VISIBLE else View.GONE
+        holder.roomType.text = "${room.roomType.replaceFirstChar { it.uppercase() }} Room"
 
-        // Set up edit button click listener
+        val computerContainer =
+            holder.itemView.findViewById<View>(R.id.computer_indicator).parent as View
+
+        val projectorContainer =
+            holder.itemView.findViewById<View>(R.id.projector_indicator).parent as View
+
+        computerContainer.visibility =
+            if (room.hasComputer) View.VISIBLE else View.GONE
+
+        projectorContainer.visibility =
+            if (room.hasProjector) View.VISIBLE else View.GONE
+
+        // Edit button
         holder.btnEdit.setOnClickListener {
+
             val editDialog = EditRoomDialog(activity, room, onRoomUpdatedListener)
+
             onEditDialogCreated?.invoke(editDialog)
+
             editDialog.show()
         }
 
-        // Set up delete button click listener
+        // Delete button
         holder.btnDelete.setOnClickListener {
+
             showDeleteConfirmationDialog(room)
         }
 
-        // Set up bookings button click listener
+        // Bookings button
         holder.btnBookings.setOnClickListener {
-            // TODO: Implement bookings functionality
+
+            Toast.makeText(
+                activity,
+                "Bookings feature coming soon",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
-    override fun getItemCount() = rooms.size
+    override fun getItemCount(): Int {
+        return rooms.size
+    }
 
     private fun showDeleteConfirmationDialog(room: Room) {
+
         val alertDialog = AlertDialog.Builder(activity)
             .setTitle("Delete Room")
-            .setMessage("Are you sure you want to delete '${room.name}'? This action cannot be undone.")
+            .setMessage("Are you sure you want to delete '${room.name}'?")
             .setPositiveButton("Delete") { _, _ ->
+
                 deleteRoom(room)
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -87,50 +109,38 @@ class RoomAdapter(
     }
 
     private fun deleteRoom(room: Room) {
-        try {
-            val roomRepo = RoomRepo(activity)
-            val roomPhotosRepo = RoomPhotosRepo(activity)
 
-            // Delete room photos from database and storage
-            val roomPhotos = roomPhotosRepo.getAllPhotosByRoomId(room.id.toInt())
-            for (photo in roomPhotos) {
-                val photoId = photo["id"]?.toIntOrNull()
-                if (photoId != null) {
-                    roomPhotosRepo.deletePhoto(photoId)
-                }
+        db.collection("room")
+            .document(room.id)
+            .delete()
+            .addOnSuccessListener {
 
-                // Delete photo file from storage
-                val photoPath = photo["photo_url"]
-                if (photoPath != null) {
-                    val file = File(photoPath)
-                    if (file.exists()) {
-                        file.delete()
-                    }
-                }
+                Toast.makeText(
+                    activity,
+                    "Room '${room.name}' deleted successfully",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                onRoomUpdatedListener?.invoke()
             }
+            .addOnFailureListener {
 
-            // Delete the room from database
-            roomRepo.deleteRoom(room.id.toInt())
-
-            // Show success message
-            Toast.makeText(activity, "Room '${room.name}' deleted successfully", Toast.LENGTH_SHORT).show()
-
-            // Notify that room list should be refreshed
-            onRoomUpdatedListener?.invoke()
-
-        } catch (e: Exception) {
-            Toast.makeText(activity, "Error deleting room: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
+                Toast.makeText(
+                    activity,
+                    "Failed to delete room",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
     }
 }
 
-// Data class for Room
+// Room Data Class
 data class Room(
-    val id: String,
-    val name: String,
-    val location: String,
-    val size: Int,
-    val roomType: String,
-    val hasComputer: Boolean,
-    val hasProjector: Boolean
-) 
+    val id: String = "",
+    val name: String = "",
+    val location: String = "",
+    val size: Int = 0,
+    val roomType: String = "",
+    val hasComputer: Boolean = false,
+    val hasProjector: Boolean = false
+)
