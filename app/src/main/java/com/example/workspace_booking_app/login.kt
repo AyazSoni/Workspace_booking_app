@@ -8,13 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityLoginBinding
 import com.example.workspace_booking_app.utils.DialogUtils
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseFirestore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,17 +21,13 @@ class LoginActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(binding.root)
 
+        // Initialize Firebase Auth
         auth = FirebaseAuth.getInstance()
-        db = FirebaseFirestore.getInstance()
-
-        // If already logged in → check role
-        if (auth.currentUser != null) {
-            checkUserRole(auth.currentUser!!.uid)
-        }
 
         // Go to Register Screen
         binding.btnSignup.setOnClickListener {
-            startActivity(Intent(this, Register::class.java))
+            val intent = Intent(this, Register::class.java)
+            startActivity(intent)
         }
 
         // Login Button
@@ -49,75 +43,35 @@ class LoginActivity : AppCompatActivity() {
 
                         if (task.isSuccessful) {
 
-                            val user = auth.currentUser
-
                             Toast.makeText(
                                 this,
                                 "Login Successful",
                                 Toast.LENGTH_SHORT
                             ).show()
 
-                            if (user != null) {
-                                checkUserRole(user.uid)
-                            }
+                            val user = auth.currentUser
+
+                            // You can later store roles in Firestore
+                            // For now redirect normally
+                            val intent = Intent(this, BookingDetailsActivity::class.java)
+                            startActivity(intent)
+                            finish()
 
                         } else {
 
                             DialogUtils.showMessage(
                                 context = this@LoginActivity,
                                 title = "Login Failed",
-                                message = task.exception?.message ?: "Authentication failed"
+                                message = task.exception?.message
+                                    ?: "Authentication failed"
                             )
                         }
                     }
+
+            } else {
+                Toast.makeText(this, "Please fix the errors", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    // 🔥 Check role from Firestore
-    private fun checkUserRole(uid: String) {
-
-        db.collection("users")
-            .document(uid)
-            .get()
-            .addOnSuccessListener { document ->
-
-                if (document.exists()) {
-
-                    val role = document.getString("role")
-
-                    if (role == "admin") {
-
-                        startActivity(
-                            Intent(this, AdminActivity::class.java)
-                        )
-
-                    } else {
-
-                        startActivity(
-                            Intent(this, BookingDetailsActivity::class.java)
-                        )
-                    }
-
-                    finish()
-
-                } else {
-
-                    Toast.makeText(
-                        this,
-                        "User data not found",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-            .addOnFailureListener {
-
-                Toast.makeText(
-                    this,
-                    "Error checking role",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
     }
 
     private fun isLoginInputValid(email: String, password: String): Boolean {
@@ -125,7 +79,6 @@ class LoginActivity : AppCompatActivity() {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
 
         if (email.isEmpty() || password.isEmpty()) {
-
             DialogUtils.showMessage(
                 context = this@LoginActivity,
                 title = "Missing Information",
@@ -135,7 +88,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         if (!email.matches(emailPattern.toRegex())) {
-
             DialogUtils.showMessage(
                 context = this@LoginActivity,
                 title = "Invalid Email",
