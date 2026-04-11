@@ -6,75 +6,62 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.workspace_booking_app.databinding.ActivityLoginBinding
-import com.example.workspace_booking_app.data.UserRepo
 import com.example.workspace_booking_app.utils.DialogUtils
-import com.example.workspace_booking_app.utils.SessionManager
+import com.example.workspace_booking_app.firebase.FirebaseUserRepo
+import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
+    private lateinit var auth: FirebaseAuth
+    private val userRepo = FirebaseUserRepo()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityLoginBinding.inflate(layoutInflater)
         enableEdgeToEdge()
         setContentView(binding.root)
-        val userRepo = UserRepo(this)
 
-        val btnSignup = binding.btnSignup
+        auth = FirebaseAuth.getInstance()
 
-        btnSignup.setOnClickListener {
-            val intent = Intent(this, Register::class.java)
-            startActivity(intent)
+        binding.btnSignup.setOnClickListener {
+            startActivity(Intent(this, Register::class.java))
         }
 
         binding.btnLogin.setOnClickListener {
-            val email = binding.etEmail.text.toString()
-            val password = binding.etPassword.text.toString()
+            val email = binding.etEmail.text.toString().trim()
+            val password = binding.etPassword.text.toString().trim()
 
             if (isLoginInputValid(email, password)) {
-                val user = userRepo.getValueByFilter("email" , email)
-                if (user == null) {
-                    DialogUtils.showMessage(
-                        context = this@LoginActivity, // Ensures activity context
-                        title = "Account Not Found",
-                        message = "No account found with that email. Please sign up to continue.",
-                        positiveText = "Sign Up",
-                        positiveAction = {
-                            startActivity(Intent(this@LoginActivity, Register::class.java))
-                        },
-                        negativeText = "Cancel"
-                    )
-                }
-                else if (user["password"] != password) {
-                    DialogUtils.showMessage(
-                        context = this@LoginActivity,
-                        title = "Wrong Password",
-                        message = "The password you entered is incorrect."
-                    )
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
 
-                }
-                else {
-                    // Create user session
-                    val sessionManager = SessionManager(this)
-                    sessionManager.createLoginSession(
-                        userId = user["id"] ?: "",
-                        email = user["email"] ?: "",
-                        name = user["name"] ?: "",
-                        role = user["role"] ?: ""
-                    )
-                    
-                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
-                    if(user["role"] == "admin"){
-                        val intent = Intent(this, AdminActivity::class.java)
-                        startActivity(intent)
-                        finish()
+                            // Check user role from Firestore and route accordingly
+                            userRepo.getUserRole(uid,
+                                onSuccess = { role ->
+                                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
+                                    if (role == "admin") {
+                                        startActivity(Intent(this, AdminActivity::class.java))
+                                    } else {
+                                        startActivity(Intent(this, MainActivity::class.java))
+                                    }
+                                    finish()
+                                },
+                                onFailure = {
+                                    Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show()
+                                    startActivity(Intent(this, MainActivity::class.java))
+                                    finish()
+                                }
+                            )
+                        } else {
+                            DialogUtils.showMessage(
+                                context = this@LoginActivity,
+                                title = "Login Failed",
+                                message = task.exception?.message ?: "Authentication failed"
+                            )
+                        }
                     }
-                    else {
-                        val intent = Intent(this, MainActivity::class.java)
-                        startActivity(intent)
-                        finish()
-                    }
-                }
             } else {
                 Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show()
             }
@@ -85,23 +72,13 @@ class LoginActivity : AppCompatActivity() {
         val emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+"
 
         if (email.isEmpty() || password.isEmpty()) {
-            DialogUtils.showMessage(
-                context = this@LoginActivity,
-                title = "Missing Information",
-                message = "Please enter both your email and password."
-            )
+            DialogUtils.showMessage(this@LoginActivity, "Missing Information", "Please enter both your email and password.")
             return false
         }
-
         if (!email.matches(emailPattern.toRegex())) {
-            DialogUtils.showMessage(
-                context = this@LoginActivity,
-                title = "Invalid Email",
-                message = "Please enter a valid email address."
-            )
+            DialogUtils.showMessage(this@LoginActivity, "Invalid Email", "Please enter a valid email address.")
             return false
         }
-
         return true
     }
 }

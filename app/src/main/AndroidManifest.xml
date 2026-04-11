@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,9 +14,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.WORKSPACE_BOOKING_APP"
         tools:targetApi="31">
-        
+
+        <!-- Splash screen opens first -->
         <activity
-            android:name=".LoginActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,10 +25,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".MainActivity" />
-        <activity android:name=".Register" />
-        <activity android:name=".AdminActivity" />
-        <activity android:name=".BookingDetailsActivity" />
+        <activity android:name=".Register"/>
+        <activity android:name=".LoginActivity"/>
+        <activity android:name=".MainActivity"/>
+        <activity android:name=".AdminActivity"/>
+        <activity android:name=".BookingDetailsActivity"/>
         <activity android:name=".BookingActivity" />
 
     </application>

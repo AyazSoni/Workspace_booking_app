@@ -1,21 +1,20 @@
 package com.example.workspace_booking_app
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import androidx.fragment.app.DialogFragment
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import com.example.workspace_booking_app.data.WorkspaceRepo
-import com.example.workspace_booking_app.utils.ImageUtils
+import androidx.fragment.app.DialogFragment
+import com.example.workspace_booking_app.firebase.FirebaseWorkspaceRepo
+import com.example.workspace_booking_app.supabase.SupabaseStorageHelper
 import com.google.android.material.button.MaterialButton
-import java.io.File
+import coil.load
 
 class AddRoomDialogFragment : DialogFragment() {
 
@@ -25,12 +24,32 @@ class AddRoomDialogFragment : DialogFragment() {
 
     var onDialogCloseListener: OnDialogCloseListener? = null
 
+    private val workspaceRepo = FirebaseWorkspaceRepo()
+    private val storageHelper = SupabaseStorageHelper()
+    private var newBannerUrl: String? = null
+
     private val pickMedia = registerForActivityResult(PickVisualMedia()) { uri ->
         if (uri != null) {
-            val path = ImageUtils.handleImageSelection(requireContext(), uri, "banners")
-            Toast.makeText(requireContext(), "Image Saved", Toast.LENGTH_SHORT).show()
             val bannerImageView = view?.findViewById<ImageView>(R.id.imageViewBanner)
-            ImageUtils.setImageFromPath(bannerImageView, path)
+
+            // Upload to Supabase
+            storageHelper.uploadImageFromUri(
+                context = requireContext(),
+                uri = uri,
+                folder = "banners",
+                onSuccess = { url ->
+                    newBannerUrl = url
+                    activity?.runOnUiThread {
+                        bannerImageView?.load(url)
+                        Toast.makeText(requireContext(), "Banner uploaded", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onFailure = {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Upload failed", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
         }
     }
 
@@ -39,20 +58,28 @@ class AddRoomDialogFragment : DialogFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val workspaceRepo = WorkspaceRepo(requireContext())
-        val workspace = workspaceRepo.getWorkspace()
-
         val view = inflater.inflate(R.layout.admin_setting_dialog, container, false)
 
         val nameTextView = view.findViewById<EditText>(R.id.workspace_name_input)
         val bannerImageView = view.findViewById<ImageView>(R.id.imageViewBanner)
 
-        val workspace_name = workspace?.get("name") ?: "harami Workspace"
-        val bannerPath = workspace?.get("banner_path")
-        nameTextView.setText(workspace_name)
-        bannerPath?.let {
-            ImageUtils.setImageFromPath(bannerImageView, it)
-        }
+        // Load workspace from Firestore
+        workspaceRepo.getOrCreateDefaultWorkspace(
+            onSuccess = { workspace ->
+                activity?.runOnUiThread {
+                    nameTextView.setText(workspace["name"] as? String ?: "Default Workspace")
+                    val bannerUrl = workspace["bannerUrl"] as? String
+                    if (!bannerUrl.isNullOrEmpty()) {
+                        bannerImageView.load(bannerUrl)
+                    }
+                }
+            },
+            onFailure = {
+                activity?.runOnUiThread {
+                    nameTextView.setText("Default Workspace")
+                }
+            }
+        )
 
         return view
     }
@@ -78,11 +105,24 @@ class AddRoomDialogFragment : DialogFragment() {
         }
 
         view.findViewById<MaterialButton>(R.id.btnsave).setOnClickListener {
-            val workspaceRepo = WorkspaceRepo(requireContext())
             val workspaceName = view.findViewById<EditText>(R.id.workspace_name_input).text.toString()
-            workspaceRepo.updateWorkspace(workspaceName)
-            onDialogCloseListener?.onDialogClosed()
-            dismiss()
+
+            workspaceRepo.updateWorkspace(
+                name = workspaceName,
+                bannerUrl = newBannerUrl,
+                onSuccess = {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Workspace updated", Toast.LENGTH_SHORT).show()
+                        onDialogCloseListener?.onDialogClosed()
+                        dismiss()
+                    }
+                },
+                onFailure = {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Update failed", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
         }
     }
 

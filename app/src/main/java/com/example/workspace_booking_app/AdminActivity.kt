@@ -6,49 +6,44 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-
-import com.example.workspace_booking_app.data.WorkspaceRepo
-import com.example.workspace_booking_app.data.RoomRepo
-import com.example.workspace_booking_app.utils.ImageUtils
-import com.example.workspace_booking_app.Room
+import com.example.workspace_booking_app.firebase.FirebaseRoomRepo
+import com.example.workspace_booking_app.firebase.FirebaseWorkspaceRepo
+import com.google.firebase.auth.FirebaseAuth
+import coil.load
 
 class AdminActivity : AppCompatActivity() {
 
     private lateinit var addRoomDialog: Add_room
+    private val firebaseRoomRepo = FirebaseRoomRepo()
+    private val workspaceRepo = FirebaseWorkspaceRepo()
     private var currentEditDialog: EditRoomDialog? = null
+
+    // Registered early (before STARTED) so EditRoomDialog can use it
+    private val editPickMedia = registerForActivityResult(PickVisualMedia()) { uri ->
+        if (uri != null) {
+            val bitmap = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                android.graphics.ImageDecoder.decodeBitmap(
+                    android.graphics.ImageDecoder.createSource(contentResolver, uri)
+                )
+            } else {
+                android.provider.MediaStore.Images.Media.getBitmap(contentResolver, uri)
+            }
+            currentEditDialog?.addImage(bitmap)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.admin_page)
-
-        val workspaceRepo = WorkspaceRepo(this)
-        
-        // Setup workspace banner
-        val workspace_name = findViewById<TextView>(R.id.workspace_name)
-        val workspace = workspaceRepo.getWorkspace()
-
-        workspace_name.setText(workspace?.get("name") ?: "Default Workspace" )
-        val bannerPath = workspace?.get("banner_path")
-        val bannerImageView = findViewById<ImageView>(R.id.imageViewBanner)
-        bannerPath?.let {
-            ImageUtils.setImageFromPath(bannerImageView, it)
-        }
-
-        // Setup room list
-        setupRoomList()
-
-        // Initialize Add Room Dialog (registerForActivityResult must be called before RESUMED)
-        addRoomDialog = Add_room(this)
-        addRoomDialog.setOnRoomAddedListener {
-            setupRoomList() // Refresh the room list
-        }
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -56,19 +51,34 @@ class AdminActivity : AppCompatActivity() {
             insets
         }
 
+        // Load workspace header from Firestore
+        loadWorkspaceHeader()
+
+        // Setup room list from Firestore
+        setupRoomList()
+
+        // Initialize Add Room Dialog
+        addRoomDialog = Add_room(this)
+        addRoomDialog.setOnRoomAddedListener {
+            setupRoomList()
+        }
+
+        // Logout button
+        findViewById<ImageButton>(R.id.btn_logout).setOnClickListener {
+            FirebaseAuth.getInstance().signOut()
+            Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+        }
+
+        // Settings button
         val settingButton = findViewById<ImageButton>(R.id.setting_btn)
         settingButton.setOnClickListener {
             val dialog = AddRoomDialogFragment()
             dialog.onDialogCloseListener = object : AddRoomDialogFragment.OnDialogCloseListener {
                 override fun onDialogClosed() {
-                   val workspace_name = findViewById<TextView>(R.id.workspace_name)
-                    val workspace = workspaceRepo.getWorkspace()
-                    workspace_name.setText(workspace?.get("name") ?: "harami Workspace")
-                    val bannerPath = workspace?.get("banner_path")
-                    val bannerImageView = findViewById<ImageView>(R.id.imageViewBanner)
-                    bannerPath?.let {
-                        ImageUtils.setImageFromPath(bannerImageView, it)
-                    }
+                    loadWorkspaceHeader()
                 }
             }
             dialog.show(supportFragmentManager, "AddRoomDialogFragment")
@@ -81,43 +91,63 @@ class AdminActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupRoomList() {
-        val recyclerView = findViewById<RecyclerView>(R.id.rooms_recycler_view)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        
-        // Get real data from database
-        val roomRepo = RoomRepo(this)
-        val roomsData = roomRepo.getAllRooms()
-        
-        // Convert database data to Room objects
-        val realRooms = roomsData.map { roomMap ->
-            Room(
-                id = roomMap["id"] ?: "",
-                name = roomMap["name"] ?: "",
-                location = roomMap["location"] ?: "",
-                size = roomMap["size"]?.toIntOrNull() ?: 0,
-                roomType = roomMap["room_type"] ?: "",
-                hasComputer = roomMap["has_computer"] == "1",
-                hasProjector = roomMap["has_projector"] == "1"
-            )
-        }
-        
-        recyclerView.adapter = RoomAdapter(
-            rooms = realRooms,
-            activity = this,
-            onRoomUpdatedListener = {
-                setupRoomList() // Refresh the room list when a room is updated
+    private fun loadWorkspaceHeader() {
+        val workspaceName = findViewById<TextView>(R.id.workspace_name)
+        val bannerImageView = findViewById<ImageView>(R.id.imageViewBanner)
+
+        workspaceRepo.getOrCreateDefaultWorkspace(
+            onSuccess = { workspace ->
+                runOnUiThread {
+                    workspaceName.text = workspace["name"] as? String ?: "Default Workspace"
+                    val bannerUrl = workspace["bannerUrl"] as? String
+                    if (!bannerUrl.isNullOrEmpty()) {
+                        bannerImageView.load(bannerUrl)
+                    }
+                }
             },
-            onEditDialogCreated = { editDialog ->
-                currentEditDialog = editDialog
+            onFailure = {
+                runOnUiThread {
+                    workspaceName.text = "Default Workspace"
+                }
             }
         )
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        currentEditDialog?.handleActivityResult(requestCode, resultCode, data)
+    private fun setupRoomList() {
+        val recyclerView = findViewById<RecyclerView>(R.id.rooms_recycler_view)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        firebaseRoomRepo.getRooms(
+            onSuccess = { roomModels ->
+                runOnUiThread {
+                    val rooms = roomModels.map { rm ->
+                        Room(
+                            id = rm.id,
+                            name = rm.name,
+                            location = rm.location,
+                            size = rm.size,
+                            roomType = rm.roomType,
+                            hasComputer = rm.hasComputer,
+                            hasProjector = rm.hasProjector,
+                            description = rm.description,
+                            imageUrls = rm.imageUrls
+                        )
+                    }
+
+                    recyclerView.adapter = RoomAdapter(
+                        rooms = rooms,
+                        activity = this,
+                        editPickMedia = editPickMedia,
+                        onEditDialogCreated = { dialog -> currentEditDialog = dialog },
+                        onRoomUpdatedListener = { setupRoomList() }
+                    )
+                }
+            },
+            onFailure = {
+                runOnUiThread {
+                    Toast.makeText(this, "Failed to load rooms", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 }
-
-

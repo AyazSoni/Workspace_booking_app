@@ -8,7 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.workspace_booking_app.utils.SessionManager
+import com.google.firebase.auth.FirebaseAuth
 
 
 class MainActivity : AppCompatActivity() {
@@ -21,13 +21,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        
-        // Check if user is logged in
-        val sessionManager = SessionManager(this)
-        if (!sessionManager.isLoggedIn()) {
-            // Redirect to login if not logged in
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+
+        // Check if user is logged in via Firebase
+        if (FirebaseAuth.getInstance().currentUser == null) {
+            startActivity(Intent(this, LoginActivity::class.java))
             finish()
             return
         }

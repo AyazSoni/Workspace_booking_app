@@ -5,9 +5,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 
 class ImageSliderAdapter(
-    private val images: List<Int>
+    private val imageUrls: List<String>
 ) : RecyclerView.Adapter<ImageSliderAdapter.ImageViewHolder>() {
 
     inner class ImageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -21,9 +22,11 @@ class ImageSliderAdapter(
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        val realPos = position % images.size   // loop images
-        holder.imageView.setImageResource(images[realPos])
+        holder.imageView.load(imageUrls[position]) {
+            placeholder(R.drawable.room1_p2)
+            error(R.drawable.room1_p2)
+        }
     }
 
-    override fun getItemCount(): Int = Int.MAX_VALUE   // simulate infinite pages
+    override fun getItemCount() = imageUrls.size
 }
